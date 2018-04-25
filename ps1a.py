@@ -54,8 +54,40 @@ def greedy_cow_transport(cows,limit=10):
     transported on a particular trip and the overall list containing all the
     trips
     """
-    # TODO: Your code here
-    pass
+    # assumes cow_weights[i] <= limit for all i in cows
+    # TODO: 
+    # what happens if there's a cow we can't carry at all
+    cows_copy = dict(cows)
+    trips = []
+    while len(cows_copy) > 0:
+        trip = greedy_per_trip(cows_copy, selected=[], ignore=set(), limit=10)
+        trips.append(trip)
+        
+    return trips
+
+## Helper code
+def greedy_per_trip(cows, selected=[], ignore=set(), limit=0):    
+    cow_weights = list(cows.values())
+    if limit <= 0 or set(cow_weights) == ignore:
+        return selected
+    
+    cow_names = list(cows.keys())
+    
+    largest_weight = max([x for x in cow_weights if x not in ignore])
+    index_of_largest = cow_weights.index(largest_weight)
+    if largest_weight <= limit:
+        heaviest_cow = cow_names[index_of_largest]
+        selected.append(heaviest_cow)
+
+        limit -= largest_weight
+        cows.pop(heaviest_cow)
+    else:
+        ignore.add(largest_weight)
+
+    return greedy_per_trip(cows, selected, ignore, limit)
+        
+    
+
 
 # Problem 3
 def brute_force_cow_transport(cows,limit=10):
