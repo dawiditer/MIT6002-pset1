@@ -4,7 +4,7 @@
 # Collaborators:
 # Time:
 
-from ps1_partition import get_partitions
+from ps1_partition import get_list_partitions
 import time
 
 #================================
@@ -150,8 +150,49 @@ def brute_force_cow_transport(cows,limit=10):
     transported on a particular trip and the overall list containing all the
     trips
     """
-    # TODO: Your code here
-    pass
+    cow_names = list(cows.keys())
+    cow_weights = list(cows.values())
+    
+    def _names_from_weights(trip,names,weights):
+        """
+        Effectively removes all weights and names carried in
+        trip. Any item removed from weights must be removed from names
+        and vice versa.
+        """        
+        this_trip = []
+        for x in trip:
+            name = names.pop(weights.index(x))
+            weights.remove(x)
+            this_trip.append(name)
+        return this_trip
+    
+    least_num_trips = len(cow_weights)#worst-case scenario is we carry one cow
+                                      #each trip
+    best_journey = None
+    
+    for journey in get_list_partitions(cow_weights):
+        names = cow_names[:]
+        weights = cow_weights[:]
+        all_trips = []
+        
+        for trip in journey:
+            #if in any one trip in this journey the weight is exceeded, disqualify journey
+            if sum(trip) > limit:
+                all_trips = []
+                break
+            this_trip = _names_from_weights(trip,names,weights)                
+            all_trips.append(this_trip)
+        
+        if not all_trips:
+            continue
+        
+        num_of_trips = len(all_trips)
+        
+        if (num_of_trips < least_num_trips):
+            best_journey = all_trips
+            least_num_trips = num_of_trips
+            
+    return best_journey if best_journey is not None else [[x] for x in cow_names]
         
 # Problem 4
 def compare_cow_transport_algorithms():
@@ -173,6 +214,13 @@ def compare_cow_transport_algorithms():
 if __name__ == "__main__":
 ##    cows = {"Jesse": 6, "Alan": 3, "Maybel": 3, "Callie": 2, "Maggie": 5}
     cows = load_cows("ps1_cow_data.txt")    
+    all_trips = brute_force_cow_transport(cows, 10)
+
+    print("Brute force best journey:", len(all_trips))
+    for trip in all_trips:
+        print(trip)
+    
     all_trips = greedy_cow_transport(cows, 10)
+    print("\nGreedy best journey:", len(all_trips))
     for trip in all_trips:
         print(trip)
