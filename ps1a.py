@@ -54,37 +54,76 @@ def greedy_cow_transport(cows,limit=10):
     transported on a particular trip and the overall list containing all the
     trips
     """
-    # assumes cow_weights[i] <= limit for all i in cows
-    # TODO: 
-    # what happens if there's a cow we can't carry at all
-    cows_copy = dict(cows)
-    trips = []
-    while len(cows_copy) > 0:
-        trip = greedy_per_trip(cows_copy, selected=[], ignore=set(), limit=10)
-        trips.append(trip)
+    # assumes each value in cows.values() <= limit
+    flipped_cows = _flip_dict(cows)
+    
+    return _greedy_cow_recursive(flipped_cows, limit)
+
+######## helper methods ###########
+def _flip_dict(dict_):
+    """
+    Flips a dictionary such that the keys become values and values become keys
+    Example:
+    dict_ = {"Jesse": 6, "Alan": 3, "Maybel": 3, "Callie": 2, "Maggie": 5}
+    flipped_dict = {2: ['Callie'], 3: ['Alan', 'Maybel'], 5: ['Maggie'], 6: ['Jesse']}
+
+    Requires all dict_.values() to be hashable.
+    Does not mutate dict_.
+    """
+    flipped_dict = dict()
+    for k,v in dict_.items():
+        flipped_dict[v] = flipped_dict.get(v, []) + [k]
+    return flipped_dict
+
+def _greedy_cow_recursive(flipped_cows, limit,
+                          total_selected_weight=0, selected_names=None,
+                          ignored=None, all_trips=None):
+    #google-style-guide: Do not use mutable objects as default values in the function or method definition.
+    if selected_names is None:
+        selected_names = []
+    if ignored is None:
+        ignored = set()
+    if all_trips is None:
+        all_trips = []
         
-    return trips
-
-## Helper code
-def greedy_per_trip(cows, selected=[], ignore=set(), limit=0):    
-    cow_weights = list(cows.values())
-    if limit <= 0 or set(cow_weights) == ignore:
-        return selected
+    cow_weights = set(flipped_cows.keys())
+    current_limit = limit - total_selected_weight
     
-    cow_names = list(cows.keys())
-    
-    largest_weight = max([x for x in cow_weights if x not in ignore])
-    index_of_largest = cow_weights.index(largest_weight)
-    if largest_weight <= limit:
-        heaviest_cow = cow_names[index_of_largest]
-        selected.append(heaviest_cow)
+    def _append_trip_if_not_empty():
+        """
+        Appends selected_names to all_trips if and only if
+        selected_names is not empty
+        """
+        if selected_names:
+            all_trips.append(selected_names)
+            
+    if not flipped_cows:
+        _append_trip_if_not_empty()
+            
+        return all_trips
 
-        limit -= largest_weight
-        cows.pop(heaviest_cow)
+    elif current_limit == 0 or (current_limit > 0 and cow_weights == ignored):
+        _append_trip_if_not_empty()
+        
+        return _greedy_cow_recursive(flipped_cows, limit, 0, [], set(), all_trips)
+        
+    largest_weight = max(cow_weights.difference(ignored))
+
+    if largest_weight > current_limit:
+        ignored.add(largest_weight)
     else:
-        ignore.add(largest_weight)
+        cows_with_largest_weight = flipped_cows[largest_weight]
+        try:
+            selected_names += [cows_with_largest_weight.pop()]
+            total_selected_weight += largest_weight
+            
+            if not cows_with_largest_weight:
+                flipped_cows.pop(largest_weight)
+        except IndexError:
+            flipped_cows.pop(largest_weight)
 
-    return greedy_per_trip(cows, selected, ignore, limit)
+    return _greedy_cow_recursive(flipped_cows, limit, total_selected_weight, selected_names, ignored, all_trips)
+##################################
         
     
 
@@ -130,3 +169,10 @@ def compare_cow_transport_algorithms():
     """
     # TODO: Your code here
     pass
+
+if __name__ == "__main__":
+##    cows = {"Jesse": 6, "Alan": 3, "Maybel": 3, "Callie": 2, "Maggie": 5}
+    cows = load_cows("ps1_cow_data.txt")    
+    all_trips = greedy_cow_transport(cows, 10)
+    for trip in all_trips:
+        print(trip)
