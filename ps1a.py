@@ -208,19 +208,27 @@ def compare_cow_transport_algorithms():
     Returns:
     Does not return anything.
     """
-    # TODO: Your code here
-    pass
+    cows = load_cows("ps1_cow_data.txt")
+    
+    start = time.time()
+    trips_greedy = greedy_cow_transport(cows)
+    end = time.time()
+    time_greedy = end - start
+    
+    start = time.time()
+    trips_brute = brute_force_cow_transport(cows)
+    end = time.time()
+    time_brute = end - start
+
+    num_trips_greedy = len(trips_greedy)
+    num_trips_brute = len(trips_brute)
+
+    print("least num of trips from greedy: ", num_trips_greedy)
+    print("least num of trips from brute: ", num_trips_brute)
+    print("time taken by brute: \t%.4f seconds " % time_brute)
+    print("time taken by greedy: \t%.4f seconds" % time_greedy)
+    print("brute - greedy = \t%.4f seconds" % (time_brute - time_greedy))
 
 if __name__ == "__main__":
 ##    cows = {"Jesse": 6, "Alan": 3, "Maybel": 3, "Callie": 2, "Maggie": 5}
-    cows = load_cows("ps1_cow_data.txt")    
-    all_trips = brute_force_cow_transport(cows, 10)
-
-    print("Brute force best journey:", len(all_trips))
-    for trip in all_trips:
-        print(trip)
-    
-    all_trips = greedy_cow_transport(cows, 10)
-    print("\nGreedy best journey:", len(all_trips))
-    for trip in all_trips:
-        print(trip)
+    compare_cow_transport_algorithms()
